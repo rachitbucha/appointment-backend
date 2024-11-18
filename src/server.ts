@@ -1,26 +1,48 @@
 import express, { Express } from 'express';
-import { ConfigService } from './services/config.service';
-import logger from './utils/logger';
+import { ConfigService } from './config/env.config';
+import LoggerService from '@app/utils/logger.utils';
+import routes from './routes';
+import { Logger } from 'winston';
+import ErrorHandler from '@app/handler/error.handler';
 
 export class Server {
   private app: Express;
   private configService: ConfigService;
+  private logger: Logger;
+  private errorHandler: ErrorHandler;
 
-  constructor(configService: ConfigService) {
-    this.configService = configService;
+  constructor() {
+    this.logger = LoggerService.getInstance();
+    this.configService = ConfigService.getInstance();
+    this.errorHandler = ErrorHandler.getInstance();
     this.app = express();
   }
 
   public start(): void {
-    const port = parseInt(this.configService.getEnv('API_PORT', '3000'));
-    this.app.listen(port, () => {
-      logger.info({
-        message: `🚀 App listening on the port ${port}`,
+    try {
+      const port = parseInt(this.configService.getEnv('API_PORT', '3000'));
+
+      this.app.use('/api', routes);
+
+      this.app.use(this.errorHandler.handleError);
+
+      this.app.listen(port, () => {
+        this.logger.info({
+          message: `🚀 App listening on the port ${port}`,
+          data: {
+            env: this.configService.getEnv('NODE_ENV'),
+          },
+        });
+      });
+    } catch (error) {
+      this.logger.error({
+        message: 'Failed to start the server',
         data: {
-          env: this.configService.getEnv('NODE_ENV'),
+          error,
         },
       });
-    });
+      process.exit(1);
+    }
   }
 
   public getApp(): Express {

@@ -1,13 +1,10 @@
-import { ConfigService } from './services/config.service';
 import { Server } from './server';
 
 class App {
-  private configService: ConfigService;
   private server: Server;
 
   constructor() {
-    this.configService = new ConfigService();
-    this.server = new Server(this.configService);
+    this.server = new Server();
   }
 
   public run(): void {

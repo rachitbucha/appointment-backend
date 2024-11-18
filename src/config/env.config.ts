@@ -2,8 +2,17 @@ import { Environment } from '@app/interface/environment.interface';
 import dotenv from 'dotenv';
 
 export class ConfigService {
-  constructor() {
+  private static instance: ConfigService;
+
+  private constructor() {
     dotenv.config();
+  }
+
+  public static getInstance(): ConfigService {
+    if (!ConfigService.instance) {
+      ConfigService.instance = new ConfigService();
+    }
+    return ConfigService.instance;
   }
 
   getEnv<K extends keyof Environment>(key: K, fallback?: Environment[K]): Environment[K] {

@@ -1,4 +1,7 @@
 {
+  "ts-node": {
+    "require": ["tsconfig-paths/register"]
+  },
   "compilerOptions": {
     "target": "es2023",
     "lib": ["ES2023"],
@@ -22,6 +25,7 @@
     "resolveJsonModule": true,
     "useDefineForClassFields": true,
     "baseUrl": ".",
+    "moduleResolution": "node",
     "paths": {
       "@app/*": ["src/*"],
       "@config/*": ["src/config/*"],
@@ -29,5 +33,5 @@
     }
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "**/*.spec.ts", "**/*.test.ts"]
+  "exclude": ["node_modules", "dist"]
 }
