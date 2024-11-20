@@ -4,6 +4,7 @@ import LoggerService from '@app/utils/logger.utils';
 import routes from './routes';
 import { Logger } from 'winston';
 import ErrorHandler from '@app/handler/error.handler';
+import cors from 'cors';
 
 export class Server {
   private app: Express;
@@ -21,6 +22,8 @@ export class Server {
   public start(): void {
     try {
       const port = parseInt(this.configService.getEnv('API_PORT', '3000'));
+
+      this.app.use(cors());
 
       this.app.use('/api', routes);
 

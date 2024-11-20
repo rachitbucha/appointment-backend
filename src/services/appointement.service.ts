@@ -1,5 +1,5 @@
 import { AppointmentUtils } from '@app/utils/appointment.utils';
-import moment, { duration } from 'moment';
+import moment from 'moment';
 import { Event } from '@app/interface/appointment.interface';
 import { FirebaseService } from '@app/services/firestore.service';
 import { HttpException } from '@app/handler/exception.handler';
@@ -23,7 +23,7 @@ class AppointmentService {
   async getFreeSlots(timestamp: number, timezone: string): Promise<HttpResponse> {
     try {
       const startMomentUTC = moment.tz(timestamp, timezone).startOf('day').utc();
-      const endMomentUTC = moment.tz(timestamp, timezone).endOf('day').utc();
+      const endMomentUTC = moment.tz(timestamp, timezone).endOf('day').utc().add(1, 'second');
       const existingEvents = await this.firebaseService.fetch(startMomentUTC.format(), endMomentUTC.format(), 'events');
       const dailySlots = AppointmentUtils.generateStaticSlots(timestamp, timezone);
       const availableSlots = AppointmentUtils.getAvailableSlots(dailySlots, existingEvents, timezone);

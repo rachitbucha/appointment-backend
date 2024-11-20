@@ -1,28 +1,49 @@
-import { DOCTOR_AVAILABILITY } from '@app/const/availability.const';
 import moment from 'moment-timezone';
 import { Event } from '@app/interface/appointment.interface';
+import { DOCTOR_AVAILABILITY } from '@app/const/availability.const';
 
 export class AppointmentUtils {
   static generateStaticSlots(timestamp: number, userTimezone: string, duration: number = 30): string[] {
     const slots: string[] = [];
 
-    const { startHour, endHour, timezone: doctorTimezone } = DOCTOR_AVAILABILITY;
+    const { startHour, endHour, timezone: doctorTimezone, eveningStartHour, eveningStartMinute } = DOCTOR_AVAILABILITY[0];
 
-    const baseMoment = moment.tz(timestamp, doctorTimezone).startOf('day');
+    const userSelectedStartOfDay = moment.tz(timestamp, userTimezone).startOf('day');
+    const userSelectedEndOfDay = userSelectedStartOfDay.clone().endOf('day');
 
-    for (let hour = startHour; hour < endHour; hour++) {
-      for (let minute = 0; minute < 60; minute += duration) {
-        const slotMomentDoctorTZ = baseMoment.clone().set({
-          hour,
-          minute,
-          second: 0,
-          millisecond: 0,
-        });
+    const doctorSelectedStartOfDay = moment.tz(timestamp, doctorTimezone).startOf('day');
+    const doctorStartTime = doctorSelectedStartOfDay.clone().set({ hour: startHour, minute: 0 });
+    const doctorEndTime = doctorSelectedStartOfDay.clone().set({ hour: endHour, minute: 0 });
 
-        const slotMomentUserTZ = slotMomentDoctorTZ.clone().tz(userTimezone);
+    const userDoctorStartTime = doctorStartTime.clone().tz(userTimezone);
+    const userDoctorEndTime = doctorEndTime.clone().tz(userTimezone);
 
-        const formattedSlot = slotMomentUserTZ.format('YYYY-MM-DDTHH:mm:ssZ');
-        slots.push(formattedSlot);
+    const effectiveStartTime = moment.max(userSelectedStartOfDay, userDoctorStartTime);
+    const effectiveEndTime = moment.min(userSelectedEndOfDay, userDoctorEndTime);
+
+    const currentTime = moment.tz(userTimezone);
+
+    let currentSlotTime = effectiveStartTime.clone();
+    while (currentSlotTime.isBefore(effectiveEndTime)) {
+      if (currentSlotTime.isAfter(currentTime)) {
+        slots.push(currentSlotTime.format('YYYY-MM-DDTHH:mm:ssZ'));
+      }
+      currentSlotTime.add(duration, 'minutes');
+    }
+
+    if (eveningStartHour !== null && eveningStartMinute !== null) {
+      const eveningStartTime = userSelectedStartOfDay
+        .clone()
+        .set({ hour: eveningStartHour, minute: eveningStartMinute });
+
+      if (effectiveEndTime.isBefore(eveningStartTime)) {
+        let eveningSlotTime = eveningStartTime.clone();
+        while (eveningSlotTime.isBefore(userSelectedEndOfDay)) {
+          if (eveningSlotTime.isAfter(currentTime)) {
+            slots.push(eveningSlotTime.format('YYYY-MM-DDTHH:mm:ssZ'));
+          }
+          eveningSlotTime.add(duration, 'minutes');
+        }
       }
     }
 
